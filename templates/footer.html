@@ -1,0 +1,271 @@
+<div class="content-backdrop fade"></div>
+</div>
+<!-- Content wrapper -->
+</div>
+<!-- / Layout page -->
+</div>
+<!-- Overlay -->
+<div class="layout-overlay layout-menu-toggle"></div>
+
+</div>
+<!-- / Layout wrapper -->
+<!-- Core JS -->
+
+<!-- SEND CHAT SCRIPT -->
+<script>
+      $(document).ready(function() {
+            function scrollToBottom(){
+                  var chatHistory = $('.chat-history');
+                  chatHistory.scrollTop(chatHistory[0].scrollHeight);
+              }
+              scrollToBottom();
+      });
+
+      function add_thread() {
+            let threads = $('#threads').val();
+
+            $.ajax({
+                  type: "POST",
+                  url: "/add_threads",
+                  data: {
+                        threads_give: threads
+                  },
+                  success: function (response) {
+                        window.location.reload();
+                  }
+            })
+      }
+
+      function sendChat() {
+            var path = window.location.pathname;
+            var match = path.match(/\/([^\/]+)\/([^\/]+)$/);
+            if (match) {
+                  var sender = match[1];
+                  var receiver = match[2];
+                  let plaintext = $('#message-user').val();
+                  console.log("Sender:", sender);
+                  console.log("Receiver:", receiver);
+                  console.log("Plaintext:", plaintext);
+
+                  $.ajax({
+                        type: "POST",
+                        url: "/send_chat",
+                        data: {
+                            sender_give: sender,
+                            receiver_give: receiver,
+                            plaintext_give: plaintext
+                        },
+                        success: function (response) {
+                            window.location.reload();
+                        }
+                  });
+            } else {
+                  console.error("URL path does not match the expected pattern");
+            }
+      }        
+
+      function loadChatHistory(userId) {
+            $.ajax({
+                url: '/get_chat_history/' + userId,
+                method: 'GET',
+                success: function (data) {
+                    $('#chat-history').html(data);
+                },
+                error: function (error) {
+                    console.error('Error fetching chat history:', error);
+                }
+            });
+      }
+
+      function scrollToBottom() {
+            var chatHistoryContainer = $('#chat-history-container');
+            chatHistoryContainer.scrollTop(chatHistoryContainer[0].scrollHeight);
+      }
+
+      function update_user() {
+            let nama = $('#nama').val();
+            let file = $("#foto-profile")[0].files[0];
+            let form_data = new FormData();
+            form_data.append("file_give", file);
+            form_data.append("nama_give", nama);
+        
+            $.ajax({
+                type: "POST",
+                url: "/update_profile",
+                data: form_data,
+                contentType: false,
+                processData: false,
+                success: function (response) {
+                    window.location.reload();
+                },
+            });
+      }              
+</script>
+
+<script type="text/javascript">
+    $('#btnTambahPresensi').click(function () {
+          $('#presensiForm').toggle();
+    });
+
+    function tambah_data_kelas() {
+          let mentor = $('#mentor').val();
+          let sekolah = $('#sekolah').val();
+          let program = $('#program').val();
+          alert(sekolah);
+          $.ajax({
+                type: "POST",
+                url: "/tambah_data_kelas",
+                data: {
+                      mentor_give: mentor,
+                      sekolah_give: sekolah,
+                      program_give: program,
+                },
+                success: function (response) {
+                      window.location.reload();
+                }
+          });
+    };
+</script>
+
+
+<!-- Add Data Course -->
+<script type="text/javascript">
+    function tambah_data_institue() {
+          let institute = $('#institute').val();
+          let course = $('#course').val();
+          let category = $('#category').val();
+
+          $.ajax({
+                type: "POST",
+                url: "/post_institute",
+                data: {
+                      'institute_give': institute,
+                      'course_give': course,
+                      'category_give': category,
+                },
+                success: function (response) {
+                      if (response["result"] === "failed") {
+                            window.location.replace("/institute_course");
+                      } else {
+                            Swal.fire(
+                                  'Good job!',
+                                  'Data was added!',
+                                  'success'
+                            )
+                      }
+                }
+          })
+    }
+
+    function tambah_data_mentor() {
+          let mentor = $('#mentor').val();
+          let gender = $('#gender').val();
+          let address = $('#address').val();
+
+          $.ajax({
+                type: "POST",
+                url: "/post_mentor",
+                data: {
+                      'mentor_give': mentor,
+                      'gender_give': gender,
+                      'address_give': address,
+                },
+                success: function (response) {
+                      if (response["result"] === "failed") {
+                            Swal.fire(
+                                  'Error!',
+                                  response["msg"],
+                                  'error'
+                            );
+                      } else {
+                           Swal.fire({
+                                 icon: 'success',
+                                 title: 'Success!',
+                                 text: 'Data was Added!',
+                                 willClose: () => {
+                                     window.location.reload();
+                                 }
+                           });
+                      }
+                }
+          });
+    }
+</script>
+
+
+<!-- Select2JS -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+          $('.js-example-basic-single').select2();
+          $('.js-example-basic-multi').select2({
+               multiple: true
+          });
+          $('#searchMentor').on('keyup', function () {
+                var value = $(this).val().toLowerCase();
+                $('table tbody tr').filter(function () {
+                      $(this).toggle($(this).text().toLowerCase().indexOf(
+                            value) > -1)
+                });
+          });
+
+          $('#searchSchool').on('keyup', function () {
+                var value = $(this).val().toLowerCase();
+                $('table tbody tr').filter(function () {
+                      $(this).toggle($(this).text().toLowerCase().indexOf(
+                            value) > -1)
+                });
+          });
+
+          $('#searchClass').on('keyup', function () {
+                var value = $(this).val().toLowerCase();
+                $('table tbody tr').filter(function () {
+                      $(this).toggle($(this).text().toLowerCase().indexOf(
+                            value) > -1)
+                });
+          });
+
+          const links = document.querySelectorAll('.menu-item');
+          if (links.length) {
+              links.forEach((link) => {
+                  link.addEventListener('click', (e) => {
+                  links.forEach((link) => {
+                      link.classList.remove('active');
+                  });
+                  window.location.href = link.href
+                  link.classList.add('active');
+                  });
+              });
+          }
+    });
+</script>
+
+<!-- Sweet Alert -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.12/dist/sweetalert2.all.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- build:js assets/vendor/js/core.js -->
+<!-- <script src="{{ url_for('static', filename='sneat/assets/vendor/libs/jquery/jquery.js') }}"></script>
+<script src="{{ url_for('static', filename='sneat/assets/vendor/libs/popper/popper.js') }}"></script> -->
+<script src="{{ url_for('static', filename='sneat/assets/vendor/js/bootstrap.js') }}"></script>
+<script src="{{ url_for('static', filename='sneat/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js') }}">
+</script>
+
+<script src="{{ url_for('static', filename='sneat/assets/vendor/js/menu.js') }}"></script>
+
+<!-- Vendors JS -->
+<script src="{{ url_for('static', filename='sneat/assets/vendor/libs/apex-charts/apexcharts.js') }}"></script>
+
+<!-- Main JS -->
+<script src="{{ url_for('static', filename='sneat/assets/js/main.js') }}"></script>
+
+<!-- Page JS -->
+<script src="{{ url_for('static', filename='sneat/assets/js/dashboards-analytics.js') }}"></script>
+
+<!-- Place this tag in your head or just before your close body tag. -->
+<script async defer src="https://buttons.github.io/buttons.js"></script>
+</body>
+
+</html>

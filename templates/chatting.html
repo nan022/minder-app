@@ -1,0 +1,52 @@
+{% include 'header.html' %}
+<link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
+
+<div class="container mt-2">
+    <div class="row clearfix">
+        <div class="col-lg-12">
+            <div class="card chat-app">
+                <div id="plist" class="people-list">
+                    <div class="nav-item d-flex align-items-center">
+                        <i class="bx bx-search fs-4 lh-0"></i>
+                        <input type="text" class="form-control border-0 shadow-none ps-1 ps-sm-2"
+                            placeholder="Search..." aria-label="Search...">
+                    </div>
+                    <ul class="list-unstyled chat-list mt-2 mb-0">
+                        {% for user in users %}
+                        {% if user.username != user_info.username %}
+                        <li class="clearfix">
+                            <a href="/chat_with/{{ user_info.username }}/{{ user.username }}">
+                                <input type="hidden" name="receiver" value="{{ user.username }}">
+                                {% if user.profile_pic_real != null %}
+                                <img src="{{url_for('static', filename=user.profile_pic_real)}}" alt="avatar">
+                                {% else %}
+                                <img src="{{url_for('static', filename='img/user.png')}}" alt="avatar">
+                                {% endif %}
+                                <div class="about">
+                                    <div class="name">{{user.nama}}</div>
+                                    <div class="status"> <i class="fa fa-circle online"></i> online </div>
+                                </div>
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="chat">
+                    <div class="chat-header clearfix">
+                    </div>
+                    <div class="chat-history">
+                        <h5 class="text-center">Connect with people...</h5>
+                        <img class="rounded mx-auto d-block" src="{{url_for ('static', filename='/img/chaticon.svg')}}"
+                            width="50%">
+                    </div>
+                    <div class="chat-message clearfix">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% include 'footer.html' %}

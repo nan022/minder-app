@@ -1,0 +1,60 @@
+{% include 'header.html' %}
+
+<!-- START MODAL THREADS -->
+<div class="modal fade" id="basicModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                  <div class="modal-body">
+                        <div class="row">
+                              <div class="col">
+                                    <label for="nameBasic" class="form-label">What are you thinking about?</label>
+                                    <textarea class="form-control" id="threads" rows="3"></textarea>
+                              </div>
+                        </div>
+                  </div>
+                  <div class="modal-footer">
+                        <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" onclick="add_thread()">Post</button>
+                  </div>
+            </div>
+      </div>
+</div>
+<!-- END MODAL THREADS -->
+
+<div class="container-xl flex-grow-1 container-p-y">
+      <button class="btn btn-primary mb-2" data-bs-toggle="modal" data-bs-target="#basicModal">Add Threads <i
+                  class="bx bx-chat"></i></button>
+      <div class="col-lg-12 mb-4 order-0">
+            {% for thread in threads%}
+            <div class="card m-2">
+                  <div class="card-header d-flex align-items-center">
+                        <a href="" class="d-flex align-items-center">
+                              {% for user in users %}
+                              {% if user.username == thread.username %}
+                              {% if user.profile_pic_real == null %}
+                              <img class="rounded-circle me-2" src="{{url_for ('static', filename='img/user.png')}}" alt="avatar" width="5%">
+                              {% else %}
+                              <img class="rounded-circle me-2" src="{{url_for ('static', filename=user.profile_pic_real)}}" alt="avatar" width="5%">
+                              {% endif %}
+                              {% endif %}
+                              {% endfor %}
+                              <span>{{thread.username}}</span>
+                        </a>
+                        <img class="ms-auto" src="{{url_for ('static', filename='img/option.png')}}" width="2%" alt="">
+                  </div>
+                  <div class="card-body">
+                        <p class="card-text">{{ thread.tweat }}</p>
+                  </div>
+                  <div class="card-footer bg-white d-flex">
+                        <img class="me-2" src="{{url_for ('static', filename='img/thumbs-up.png')}}" width="2%" alt="">
+                        <img class="me-2" src="{{url_for ('static', filename='img/heart.png')}}" width="2%" alt="">
+                        <img src="{{url_for ('static', filename='img/repost.png')}}" width="2%" alt="">
+                        <img class="ms-auto" src="{{url_for ('static', filename='img/save-instagram.png')}}" width="2%"
+                              alt="">
+                  </div>
+            </div>
+            {% endfor %}
+      </div>
+</div>
+
+{% include 'footer.html' %}

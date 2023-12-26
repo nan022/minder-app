@@ -1,0 +1,46 @@
+{% include 'header.html' %}
+<link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
+
+<div class="container-xl flex-grow-1 container-p-y">
+    <div class="container">
+        <div class="row clearfix">
+            <div class="col-lg-12">
+                <div class="card chat-app">
+                    <div id="plist" class="people-list">
+                        <h5 class="text-center">Friends <i class="fa fa-users"></i></h5>
+                        <ul class="list-unstyled chat-list mt-2 mb-0">
+                            {% for user in users %}
+                            {% if user.username != user_info.username %}
+                            <li class="clearfix">
+                                <a href="/chat_with/{{ user_info.username }}/{{ user.username }}">
+                                    <input type="hidden" name="receiver" value="{{ user.username }}">
+                                    <img src="https://bootdey.com/img/Content/avatar/avatar2.png" alt="avatar">
+                                    <div class="about">
+                                        <div class="name">{{user.nama}}</div>
+                                        <div class="status"> <i class="fa fa-circle online"></i> online </div>
+                                    </div>
+                                </a>
+                            </li>
+                            {% endif %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="chat">
+                        <div class="chat-header clearfix">
+                        </div>
+                        <div class="chat-history">
+                            <h5 class="text-center">Recommended friend</h5>
+                            <img class="rounded mx-auto d-block"
+                                src="{{url_for ('static', filename='/img/chaticon.svg')}}" width="50%">
+                        </div>
+                        <div class="chat-message clearfix">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% include 'footer.html' %}

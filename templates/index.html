@@ -25,7 +25,7 @@
       <button class="btn btn-primary mb-2" data-bs-toggle="modal" data-bs-target="#basicModal">Add Threads <i
                   class="bx bx-chat"></i></button>
       <div class="col-lg-12 mb-4 order-0">
-            {% for thread in threads%}
+            {% for thread in threads|sort(attribute='date', reverse=True)%}
             <div class="card m-2">
                   <div class="card-header d-flex align-items-center">
                         <a href="" class="d-flex align-items-center">

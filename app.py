@@ -6,6 +6,7 @@ from pymongo import MongoClient
 import jwt
 import hashlib
 from flask import Flask, render_template, jsonify, request, redirect, url_for
+import pymongo
 from werkzeug.utils import secure_filename
 from collections import defaultdict
 import datetime as dt
@@ -173,68 +174,75 @@ def receiver(username, receiver):
         }).sort('date', 1)
         users = db.users.find()
         user_chat = db.users.find_one({'username': receiver})
+        key_matrix = np.array([[2, 1], [3, 4]])  # Matriks kunci 2x2
         return render_template(
             'chat_with.html',
             user_info=user_info,
             chats=chats,
             users=users,
             user_chat=user_chat,
-            status=status
+            status=status,
+            hill_cipher_decrypt=hill_cipher_decrypt,
+            key_matrix=key_matrix
         )
     except (jwt.ExpiredSignatureError, jwt.exceptions.DecodeError):
         return redirect(url_for('home'))
 
-# Function TO Encryption
-def hill_cipher_encrypt(PT, key):
-    # Menghapus spasi dan mengubah huruf kecil
-    PT = PT.lower()
+def hill_cipher_encrypt(plain_text, key_matrix):
+    alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    plain_text = plain_text.upper()  # Mengubah teks menjadi huruf kapital
+    encrypted_text = ""  # Inisialisasi teks terenkripsi sebagai string kosong
+    
+    n = len(key_matrix)  # Ukuran matriks kunci
+    
+    # Pad teks jika panjangnya tidak kelipatan dari n
+    if len(plain_text) % n != 0:
+        plain_text += "X" * (n - (len(plain_text) % n))
+    
+    # Loop melalui teks plain dan enkripsi per blok n
+    for i in range(0, len(plain_text), n):
+        chunk = plain_text[i:i + n]  # Ambil potongan teks sepanjang n
+        chunk_vector = []
+        
+        # Buat vektor karakter, mengabaikan spasi
+        for char in chunk:
+            if char in alphabet:
+                chunk_vector.append(alphabet.index(char))
+            else:
+                chunk_vector.append(ord(char) - ord('A'))
+        
+        encrypted_chunk = np.dot(key_matrix, chunk_vector) % 26  # Enkripsi menggunakan matriks kunci
+        encrypted_text += "".join([alphabet[int(idx)] if isinstance(idx, (int, np.integer)) else chr(idx + ord('A')) for idx in encrypted_chunk])  # Gabungkan hasil enkripsi
+    
+    return encrypted_text  # Mengembalikan teks terenkripsi
 
-    # Mendefinisikan abjad dengan nomor, termasuk karakter khusus
-    EAM = {chr(i): i - 97 for i in range(32, 127)}
+# Fungsi untuk menghitung invers matriks modulo
+def matrix_mod_inverse(matrix, modulus):
+    det = int(np.round(np.linalg.det(matrix)))  # Menghitung determinan matriks
+    det_inverse = pow(det, -1, modulus)  # Menghitung invers determinan
+    adjugate = (det * np.linalg.inv(matrix)).round()  # Menghitung matriks adjugate
+    inverse = (adjugate * det_inverse) % modulus  # Menghitung invers matriks
+    return inverse
 
-    # Mendapatkan nomor dari plaintext
-    PT_numbers = [EAM.get(char, None) for char in PT]
-
-    # Validasi kunci dan plaintext
-    if any(num is None for num in PT_numbers):
-        print("Error: Karakter tidak valid dalam plaintext.")
-        return None
-
-    key_numbers = [EAM.get(char, None) for char in key]
-
-    # Validasi kunci
-    if any(num is None for num in key_numbers):
-        print("Error: Karakter tidak valid dalam kunci.")
-        return None
-
-    BL = len(key) // 2  # Panjang Blok
-
-    # Memeriksa apakah matriks kunci dapat diinvers
-    try:
-        key_matrix = np.array(key_numbers).reshape(BL, BL)
-        np.linalg.inv(key_matrix)
-    except np.linalg.LinAlgError:
-        print("Error: Matriks kunci tidak dapat diinvers.")
-        return None
-
-    # Mengubah nomor PT menjadi matriks
-    PT_array = np.array(PT_numbers)
-
-    # Mengisi spasi pada plaintext jika panjangnya tidak habis dibagi oleh BL
-    if len(PT_array) % BL != 0:
-        padding = BL - (len(PT_array) % BL)
-        PT_array = np.concatenate([PT_array, np.zeros(padding, dtype=int)])
-
-    PT_blocks = np.split(PT_array, len(PT_array) // BL)
-
-    CT_blocks = [np.matmul(PT_blocks[i], key_matrix) % 94 for i in range(len(PT_blocks))]
-
-    CT_array = np.concatenate(CT_blocks)
-
-    # Mengonversi kembali ke karakter, memperhatikan rentang ASCII
-    CT = ''.join([chr(i + 32) for i in CT_array])
-
-    return CT
+# Fungsi untuk mendekripsi teks yang telah dienkripsi menggunakan Hill Cipher
+def hill_cipher_decrypt(encrypted_text, key_matrix):
+    alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    encrypted_text = encrypted_text.upper()  # Mengubah teks terenkripsi menjadi huruf kapital
+    decrypted_text = ""  # Inisialisasi teks terdekripsi sebagai string kosong
+    
+    n = len(key_matrix)  # Ukuran matriks kunci
+    
+    # Menghitung invers matriks kunci
+    key_inverse = matrix_mod_inverse(key_matrix, 26)
+    
+    # Loop melalui teks terenkripsi dan mendekripsi per blok n
+    for i in range(0, len(encrypted_text), n):
+        chunk = encrypted_text[i:i + n]  # Ambil potongan teks terenkripsi sepanjang n
+        chunk_vector = np.array([alphabet.index(char) for char in chunk])  # Buat vektor karakter
+        decrypted_chunk = np.dot(key_inverse, chunk_vector) % 26  # Mendekripsi menggunakan invers matriks kunci
+        decrypted_text += "".join([alphabet[int(idx)] for idx in decrypted_chunk])  # Gabungkan hasil dekripsi
+    
+    return decrypted_text  # Mengembalikan teks terdekripsi
 
 @app.route("/send_chat", methods=["POST"])
 def send_chat():
@@ -250,8 +258,8 @@ def send_chat():
         plaintext_receive = request.form['plaintext_give']
         current_date = datetime.now()
         formatted_date = current_date.strftime("%Y-%m-%d %H:%M")
-        key = "test"
-        ciphertext = hill_cipher_encrypt(plaintext_receive, key)
+        key_matrix = np.array([[2, 1], [3, 4]])  # Matriks kunci 2x2
+        ciphertext = hill_cipher_encrypt(plaintext_receive, key_matrix)  # Enkripsi teks
         user_info = db.users.find_one({'username': payload.get('username')})
         doc = {
             'id_user' : user_info['_id'],
@@ -262,6 +270,9 @@ def send_chat():
             'receiver' : receiver_receive
         }
         db.chat.insert_one(doc)
+        newly_inserted_data = db.chat.find_one(sort=[('_id', pymongo.DESCENDING)])  # Mengambil data terakhir berdasarkan _id
+        decrypted_text = hill_cipher_decrypt(newly_inserted_data.get('ciphertext'), key_matrix)
+        print(decrypted_text)
         return jsonify({'msg': 'Data berhasil disimpan!'})
     except jwt.ExpiredSignatureError:
         msg = 'Your token has expired'
